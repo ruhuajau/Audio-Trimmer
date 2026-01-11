@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		0E0424732F146CC400AC579A /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = 0E0424722F146CC400AC579A /* ComposableArchitecture */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		0E0424542F14621500AC579A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0E0424732F146CC400AC579A /* ComposableArchitecture in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +83,7 @@
 				0E0424442F14621400AC579A /* Audio-Trimmer */,
 				0E0424562F14621500AC579A /* Audio-TrimmerTests */,
 				0E0424602F14621500AC579A /* Audio-TrimmerUITests */,
+				0E0424712F146CC400AC579A /* Frameworks */,
 				0E0424432F14621400AC579A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -90,6 +96,13 @@
 				0E04245D2F14621500AC579A /* Audio-TrimmerUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		0E0424712F146CC400AC579A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -112,6 +125,7 @@
 			);
 			name = "Audio-Trimmer";
 			packageProductDependencies = (
+				0E0424722F146CC400AC579A /* ComposableArchitecture */,
 			);
 			productName = "Audio-Trimmer";
 			productReference = 0E0424422F14621400AC579A /* Audio-Trimmer.app */;
@@ -195,6 +209,9 @@
 			);
 			mainGroup = 0E0424392F14621400AC579A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				0E0424702F146C8B00AC579A /* XCRemoteSwiftPackageReference "swift-composable-architecture" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0E0424432F14621400AC579A /* Products */;
 			projectDirPath = "";
@@ -585,6 +602,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0E0424702F146C8B00AC579A /* XCRemoteSwiftPackageReference "swift-composable-architecture" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-composable-architecture";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.23.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0E0424722F146CC400AC579A /* ComposableArchitecture */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0E0424702F146C8B00AC579A /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
+			productName = ComposableArchitecture;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 0E04243A2F14621400AC579A /* Project object */;
 }
