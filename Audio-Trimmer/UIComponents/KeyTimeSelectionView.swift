@@ -68,24 +68,13 @@ private struct KeyTimeBar: View {
             )
             .offset(x: w * selection.lowerBound)
             .opacity(0.95)
-            .allowsHitTesting(false)   // ✅
-
-          Capsule()
-            .fill(.green)
-            .frame(width: 2, height: 18)
-            .offset(x: w * playhead)
-            .allowsHitTesting(false)   // ✅
+            .allowsHitTesting(false)
 
             ForEach(keyTimes, id: \.self) { t in
               ZStack {
                 Circle()
                   .fill(.pink)
                   .frame(width: 16, height: 16)
-
-//                Text(String(format: "%.2f", t))
-//                  .font(.system(size: 8))
-//                  .foregroundStyle(.white)
-//                  .minimumScaleFactor(0.5)
               }
               .offset(x: w * t - 8)
               .highPriorityGesture(

@@ -70,9 +70,7 @@ private struct TimelineWaveform: View {
             
             let contentWidth = windowWidth / windowRatio
             
-            // ✅ 這個 offset 會保證：
-            // start = 0 時：波形頭貼著框框左邊
-            // start = maxStart 時：波形尾貼著框框右邊
+
             let start = min(max(0, selection.lowerBound), maxStart)
             let contentOffsetX = windowX - contentWidth * start
             
@@ -105,8 +103,6 @@ private struct TimelineWaveform: View {
                             .offset(x: windowX, y: 9)
                     )
                 
-                
-                // ✅ 框框固定置中
                 RoundedRectangle(cornerRadius: 12)
                     .fill(.white.opacity(0.22))
                     .overlay(
@@ -121,10 +117,6 @@ private struct TimelineWaveform: View {
                     .frame(width: windowWidth, height: h - 18)
                     .offset(x: windowX, y: 9)
                 
-                Rectangle()
-                    .fill(.green)
-                    .frame(width: 2, height: h - 18)
-                    .offset(x: playheadX, y: 9)
             }
             .contentShape(Rectangle())
             .gesture(

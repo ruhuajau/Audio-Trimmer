@@ -11,10 +11,12 @@ import ComposableArchitecture
 struct SettingsView: View {
     let store: StoreOf<SettingsFeature>
     @State private var timelineRatioText: String = ""
+    @State private var keyTimesText: String = ""
     
     @FocusState private var focusedField: Field?
     private enum Field: Hashable {
         case timelineRatio
+        case keyTimes
     }
     
     var body: some View {
@@ -33,25 +35,28 @@ struct SettingsView: View {
                     }
                 }
                 
-                Section("KeyTimes (preset)") {
-                    Text("KeyTimes: \(store.keyTimes.map { String(format: "%.0f%%", $0 * 100) }.joined(separator: ", "))")
+                Section("KeyTimes (percentages)") {
+                    TextField("", text: $keyTimesText)
+                        .keyboardType(.numbersAndPunctuation)
+                        .focused($focusedField, equals: .keyTimes)
+                        .onChange(of: keyTimesText) { _, v in
+                            store.send(.keyTimesTextChanged(v))
+                        }
+                    
+                    Text("Enter comma-separated percentages (0–100), e.g. 8,20,33,41")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-                    
-                    Button("Use default key times") {
-                        store.send(.setDefaultKeyTimesTapped)
-                    }
                 }
                 
-                Section("Timeline length ratio (optional)") {
-                    TextField("e.g. 1.0 (no zoom in)", text: $timelineRatioText)
+                Section("Timeline length ratio (percentages)") {
+                    TextField("", text: $timelineRatioText)
                         .keyboardType(.decimalPad)
                         .focused($focusedField, equals: .timelineRatio)
                         .onChange(of: timelineRatioText) { _, newValue in
                             store.send(.timelineLengthRatioChanged(newValue))
                         }
                     
-                    Text("Leave empty to use default UI length.")
+                    Text("Enter percentage (0–100), e.g. 100 (no zoom), 50 (zoom in)")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -74,10 +79,11 @@ struct SettingsView: View {
             }
             .onAppear {
                 if let v = store.timelineLengthRatio {
-                    timelineRatioText = String(v)
+                    timelineRatioText = String(Int((v * 100).rounded()))
                 } else {
                     timelineRatioText = ""
                 }
+                keyTimesText = store.keyTimesText
             }
         }
     }
