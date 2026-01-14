@@ -84,13 +84,13 @@ private struct TimelineWaveform: View {
                 RoundedRectangle(cornerRadius: 14)
                     .fill(.black.opacity(0.35))
                 
-                let barCount = max(10, Int(contentWidth / 6)) // 每根 bar 約 3 寬 + 3 spacing
+                let barCount = max(10, Int(contentWidth / 7)) // 稍微增加間距讓菱形更明顯
+
                 FakeWave(barCount: barCount, color: .white)
-                    .frame(width: contentWidth, height: h, alignment: .leading) // ✅ 靠左
+                    .frame(width: contentWidth, height: h - 18) // 👈 高度改為與選取框一致 (92 - 18 = 74)
+                    .offset(x: contentOffsetX, y: 9)            // 👈 加入 y: 9，與選取框同步偏移
                     .opacity(0.9)
-                    .offset(x: contentOffsetX)
                     .clipped()
-                    .id(contentOffsetX)
                 
                 RoundedRectangle(cornerRadius: 12)
                     .fill(.green.opacity(0.35))
@@ -144,21 +144,22 @@ private struct FakeWave: View {
     let barCount: Int
     let color: Color
     
-    // 定義一個對稱的「菱形」高度序列
-    // 數字代表高度比例：低 -> 中 -> 高 -> 中 -> 低
     private let diamondPattern: [CGFloat] = [
         0.2, 0.4, 0.6, 0.8, 0.6, 0.4
     ]
     
     var body: some View {
-        HStack(spacing: 4) {
+        // 移除 GeometryReader 避免不必要的排版計算
+        HStack(alignment: .center, spacing: 4) { // 👈 確保 HStack 內部置中
             ForEach(0..<barCount, id: \.self) { i in
                 let ratio = diamondPattern[i % diamondPattern.count]
                 
                 Capsule()
                     .fill(color)
-                    .frame(width: 3, height: 60 * ratio)
-                    .frame(height: 80, alignment: .center)
+                    // 使用比例來決定高度，確保不會超出父容器
+                    .frame(width: 3, height: 50 * ratio)
+                    // 這裡的 frame 是關鍵，它定義了單根 bar 的感應/佈局區域
+                    .frame(maxHeight: .infinity, alignment: .center)
             }
         }
     }
