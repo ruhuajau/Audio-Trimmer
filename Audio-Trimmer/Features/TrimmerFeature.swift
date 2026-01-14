@@ -17,11 +17,15 @@ struct TrimmerFeature {
     var keyTimes: [Double]  // 0~1
     var timelineLengthRatio: Double?
 
-    // selection：用百分比表示（0~1）
-    var selectionStart: Double = 0.408
-    var selectionEnd: Double = 0.491
+    // 固定 10 秒視窗
+    let windowDuration: Double = 10
 
-    // 目前播放位置：也是百分比（0~1）
+    // selection 起點（0~1）
+    var selectionStart: Double = 0.408
+
+    // current playhead（0~1）
+    // ✅ scrub / keyTime 時會被設回 selectionStart
+    // ✅ 播放時會在視窗內前進
     var playhead: Double = 0.408
 
     var isPlaying: Bool = false
@@ -30,18 +34,36 @@ struct TrimmerFeature {
       self.totalLength = totalLength
       self.keyTimes = keyTimes.sorted()
       self.timelineLengthRatio = timelineLengthRatio
+
+      // 讓初始 playhead 跟 selectionStart 一致
+      self.playhead = self.selectionStart
     }
 
-    var selectionRange: ClosedRange<Double> { selectionStart...selectionEnd }
+    // 視窗比例（0~1）
+    var windowRatio: Double {
+      windowDuration / max(0.001, totalLength)
+    }
+
+    // selection 起點要能容納完整 10 秒，不可超出尾巴
+    var maxSelectionStart: Double {
+      max(0, 1 - windowRatio)
+    }
+
+    // derived selection range（固定 10 秒）
+    var selectionRange: ClosedRange<Double> {
+      let start = min(max(0, selectionStart), maxSelectionStart)
+      let end = min(1, start + windowRatio)
+      return start...end
+    }
   }
 
   enum Action: Equatable {
     case keyTimeTapped(Double)       // 0~1
+    case scrubbedTo(Double)          // 0~1
     case playPauseTapped
     case resetTapped
-    case tick                         // timer
-    case selectionDragged(start: Double, end: Double)
-    case stopPlayback                 // internal
+    case tick                        // timer
+    case stopPlayback                // internal
   }
 
   enum CancelID { case timer }
@@ -51,24 +73,33 @@ struct TrimmerFeature {
       switch action {
 
       case let .keyTimeTapped(p):
-        // 點 KeyTime：讓 selectionStart 跳到該點，並保持固定視窗長度
-        let window = max(0.05, state.selectionEnd - state.selectionStart) // 至少 5%
-        let newStart = clamp01(p)
-        let newEnd = clamp01(newStart + window)
+        let start = clamp01(p)
+        state.selectionStart = min(start, state.maxSelectionStart)
 
-        state.selectionStart = newStart
-        state.selectionEnd = max(newEnd, clamp01(newStart + 0.02))
-        state.playhead = state.selectionStart
+        // ✅ 移動音訊時：current 跟 selectionStart 一致
+        state.playhead = state.selectionRange.lowerBound
+        state.isPlaying = false
+        return .cancel(id: CancelID.timer)
+
+      case let .scrubbedTo(t):
+        let start = clamp01(t)
+        state.selectionStart = min(start, state.maxSelectionStart)
+
+        // ✅ scrub 時：current 跟 selectionStart 一致
+        state.playhead = state.selectionRange.lowerBound
         state.isPlaying = false
         return .cancel(id: CancelID.timer)
 
       case .playPauseTapped:
         state.isPlaying.toggle()
+
         if state.isPlaying {
-          // 如果 playhead 不在 selection 範圍內，重置到 start
-          if state.playhead < state.selectionStart || state.playhead > state.selectionEnd {
-            state.playhead = state.selectionStart
+          // 開始播放時，確保 playhead 在視窗內；不在就拉回起點
+          if state.playhead < state.selectionRange.lowerBound ||
+              state.playhead > state.selectionRange.upperBound {
+            state.playhead = state.selectionRange.lowerBound
           }
+
           return .run { send in
             while true {
               try await Task.sleep(nanoseconds: 33_000_000) // ~30fps
@@ -76,35 +107,31 @@ struct TrimmerFeature {
             }
           }
           .cancellable(id: CancelID.timer, cancelInFlight: true)
+
         } else {
           return .cancel(id: CancelID.timer)
         }
 
       case .resetTapped:
-        state.playhead = state.selectionStart
+        // ✅ reset：current 回到 selectionStart
+        state.playhead = state.selectionRange.lowerBound
         state.isPlaying = false
         return .cancel(id: CancelID.timer)
 
       case .tick:
         guard state.isPlaying else { return .none }
+
         let dt = 0.033
         let dp = dt / max(0.001, state.totalLength)
-        state.playhead += dp
 
-        if state.playhead >= state.selectionEnd {
-          state.playhead = state.selectionStart
+        // ✅ 播放時只推進 playhead，不動 selectionStart（框框固定）
+        state.playhead = min(state.playhead + dp, state.selectionRange.upperBound)
+
+        // 播到尾端就停
+        if state.playhead >= state.selectionRange.upperBound {
           state.isPlaying = false
           return .cancel(id: CancelID.timer)
         }
-        return .none
-
-      case let .selectionDragged(start, end):
-        let s = clamp01(min(start, end))
-        let e = clamp01(max(start, end))
-        state.selectionStart = min(s, e - 0.01)
-        state.selectionEnd = max(e, state.selectionStart + 0.01)
-        // 拖 selection 時把 playhead clamp 進去
-        state.playhead = min(max(state.playhead, state.selectionStart), state.selectionEnd)
         return .none
 
       case .stopPlayback:

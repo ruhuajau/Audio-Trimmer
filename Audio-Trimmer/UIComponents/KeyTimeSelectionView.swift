@@ -18,9 +18,9 @@ struct KeyTimeSelectionView: View {
           .font(.headline)
           .foregroundStyle(.white)
 
-        Text("Selection: \(pct(store.selectionStart)) - \(pct(store.selectionEnd))")
+        Text("Selection: \(pct(store.selectionRange.lowerBound)) - \(pct(store.selectionRange.upperBound))")
           .foregroundStyle(.white.opacity(0.85))
-
+                           
         Text("Current: \(pct(store.playhead))")
           .foregroundStyle(.green)
 
@@ -46,40 +46,48 @@ struct KeyTimeSelectionView: View {
 // MARK: - Bar
 private struct KeyTimeBar: View {
   let keyTimes: [Double]
-  let selection: ClosedRange<Double>
-  let playhead: Double
+  let selection: ClosedRange<Double>   // absolute 0~1
+  let playhead: Double                 // absolute 0~1
   let onTapKeyTime: (Double) -> Void
 
   var body: some View {
     GeometryReader { geo in
+      let w = geo.size.width
+
+      // 固定視窗置中（視覺用）
+      let windowWidth = w * 0.55
+      let windowX = (w - windowWidth) / 2
+
+      // playhead 在 selection 內的相對位置
+      let denom = max(0.0001, selection.upperBound - selection.lowerBound)
+      let progress = (playhead - selection.lowerBound) / denom
+      let clampedProgress = min(1, max(0, progress))
+      let playheadX = windowX + windowWidth * clampedProgress
+
       ZStack(alignment: .leading) {
         Capsule()
           .fill(.white.opacity(0.12))
           .frame(height: 18)
 
-        // selection highlight (yellow)
+        // ✅ 黃色 selection 框固定置中
         Capsule()
           .fill(.yellow)
-          .frame(
-            width: max(2, geo.size.width * (selection.upperBound - selection.lowerBound)),
-            height: 10
-          )
-          .offset(x: geo.size.width * selection.lowerBound)
-          .padding(.leading, 0)
+          .frame(width: max(2, windowWidth), height: 10)
+          .offset(x: windowX)
           .opacity(0.95)
 
-        // playhead
+        // ✅ 綠線：在黃色框內移動
         Capsule()
           .fill(.green)
           .frame(width: 2, height: 18)
-          .offset(x: geo.size.width * playhead)
+          .offset(x: playheadX)
 
-        // key time dots
+        // ✅ key time dots：依然是 absolute 位置（整條 bar 上）
         ForEach(keyTimes, id: \.self) { t in
           Circle()
             .fill(.pink)
             .frame(width: 16, height: 16)
-            .offset(x: geo.size.width * t - 8)
+            .offset(x: w * t - 8)
             .contentShape(Rectangle().inset(by: -10))
             .onTapGesture { onTapKeyTime(t) }
         }
@@ -88,3 +96,4 @@ private struct KeyTimeBar: View {
     .frame(height: 22)
   }
 }
+
