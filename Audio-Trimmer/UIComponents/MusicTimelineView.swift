@@ -80,6 +80,7 @@ private struct TimelineWaveform: View {
             let progress = (playhead - selection.lowerBound) / denom
             let clampedProgress = min(1, max(0, progress))
             let playheadX = windowX + windowWidth * clampedProgress
+            let progressWidth = windowWidth * clampedProgress
             
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 14)
@@ -87,12 +88,23 @@ private struct TimelineWaveform: View {
                 
                 let barCount = max(10, Int(contentWidth / 6)) // 每根 bar 約 3 寬 + 3 spacing
                 FakeWave(barCount: barCount)
-                  .frame(width: contentWidth, height: h, alignment: .leading) // ✅ 靠左
-                  .opacity(0.9)
-                  .offset(x: contentOffsetX)
-                  .clipped()
-                  .id(contentOffsetX)
-
+                    .frame(width: contentWidth, height: h, alignment: .leading) // ✅ 靠左
+                    .opacity(0.9)
+                    .offset(x: contentOffsetX)
+                    .clipped()
+                    .id(contentOffsetX)
+                
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.green.opacity(0.35))
+                    .frame(width: progressWidth, height: h - 18)
+                    .offset(x: windowX, y: 9)
+                    .mask(
+                        RoundedRectangle(cornerRadius: 12)
+                            .frame(width: windowWidth, height: h - 18)
+                            .offset(x: windowX, y: 9)
+                    )
+                
+                
                 // ✅ 框框固定置中
                 RoundedRectangle(cornerRadius: 12)
                     .fill(.white.opacity(0.22))
@@ -108,14 +120,12 @@ private struct TimelineWaveform: View {
                     .frame(width: windowWidth, height: h - 18)
                     .offset(x: windowX, y: 9)
                 
-                // ✅ playhead 綠線：在框框內移動
                 Rectangle()
                     .fill(.green)
                     .frame(width: 2, height: h - 18)
                     .offset(x: playheadX, y: 9)
             }
             .contentShape(Rectangle())
-            // ✅ 用「translation」拖內容：手指左 → 波形左；手指右 → 波形右
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
@@ -142,16 +152,16 @@ private struct TimelineWaveform: View {
 }
 
 private struct FakeWave: View {
-  let barCount: Int
-
-  var body: some View {
-    HStack(alignment: .center, spacing: 3) {
-      ForEach(0..<barCount, id: \.self) { i in
-        let v = (i * 17) % 80
-        RoundedRectangle(cornerRadius: 2)
-          .fill(.white.opacity(0.8))
-          .frame(width: 3, height: CGFloat(10 + v))
-      }
+    let barCount: Int
+    
+    var body: some View {
+        HStack(alignment: .center, spacing: 3) {
+            ForEach(0..<barCount, id: \.self) { i in
+                let v = (i * 17) % 80
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(.white.opacity(0.8))
+                    .frame(width: 3, height: CGFloat(10 + v))
+            }
+        }
     }
-  }
 }
