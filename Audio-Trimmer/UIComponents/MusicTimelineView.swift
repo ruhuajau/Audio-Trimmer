@@ -25,10 +25,11 @@ struct MusicTimelineView: View {
                     .foregroundStyle(.green)
                 
                 TimelineWaveform(
-                    selection: store.selectionRange,
-                    playhead: store.playhead
+                  selection: store.selectionRange,
+                  playhead: store.playhead,
+                  timelineLengthRatio: store.timelineLengthRatio
                 ) { t in
-                    store.send(.scrubbedTo(t))
+                  store.send(.scrubbedTo(t))
                 }
             }
             .padding(16)
@@ -48,6 +49,7 @@ struct MusicTimelineView: View {
 private struct TimelineWaveform: View {
     let selection: ClosedRange<Double>     // 0~1，固定 10 秒視窗（absolute）
     let playhead: Double                   // 0~1
+    let timelineLengthRatio: Double?
     let onScrubTo: (Double) -> Void        // 更新 selectionStart（0~1）
     
     @State private var dragBaseStart: Double? = nil
@@ -57,16 +59,15 @@ private struct TimelineWaveform: View {
             let w = geo.size.width
             let h = geo.size.height
             
-            // 固定視窗（置中）
-            let windowWidth = w * 0.62
+            let r = CGFloat(min(1, max(0.2, timelineLengthRatio ?? 1.0)))
+
+            let base = 0.62 / r
+            let windowWidth = w * min(0.92, max(0.35, base))
             let windowX = (w - windowWidth) / 2
-            
-            // selection 視窗佔總長比例（例如 10s/60s = 0.1667）
+
             let windowRatio = max(0.0001, selection.upperBound - selection.lowerBound)
             let maxStart = max(0, 1 - windowRatio)
             
-            // ✅ 讓「整段音訊」的波形寬度跟 windowRatio 對應
-            // windowWidth 顯示的是 windowRatio 的總長，因此總波形寬 = windowWidth / windowRatio
             let contentWidth = windowWidth / windowRatio
             
             // ✅ 這個 offset 會保證：

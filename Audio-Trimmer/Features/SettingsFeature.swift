@@ -15,12 +15,12 @@ struct SettingsFeature {
     // 0~1 代表百分比
     var keyTimes: [Double] = [0.08, 0.20, 0.33, 0.41, 0.62, 0.78, 0.90]
     // optional: timeline 可視長度佔總長比例
-    var timelineLengthRatio: Double? = nil
+    var timelineLengthRatio: Double? = 1.0
   }
 
   enum Action: Equatable {
     case totalLengthChanged(Double)
-    case timelineLengthRatioChanged(String) // 用文字輸入比較省事
+    case timelineLengthRatioChanged(String) 
     case setDefaultKeyTimesTapped
     case startTapped
   }

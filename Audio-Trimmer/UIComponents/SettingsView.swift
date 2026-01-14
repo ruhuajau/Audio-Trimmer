@@ -39,8 +39,9 @@ struct SettingsView: View {
         }
 
         Section("Timeline length ratio (optional)") {
-          TextField("e.g. 0.25 (25%)", text: $timelineRatioText)
+          TextField("e.g. 1.0 (no zoom in)", text: $timelineRatioText)
             .keyboardType(.decimalPad)
+//            .focused($focusedField, equals: .timelineRatio)
             .onChange(of: timelineRatioText) { _, newValue in
               store.send(.timelineLengthRatioChanged(newValue))
             }
