@@ -74,7 +74,6 @@ private struct TimelineWaveform: View {
             let start = min(max(0, selection.lowerBound), maxStart)
             let contentOffsetX = windowX - contentWidth * start
             
-            // playhead 在框框內的位置（相對 selection）
             let denom = max(0.0001, selection.upperBound - selection.lowerBound)
             let progress = (playhead - selection.lowerBound) / denom
             let clampedProgress = min(1, max(0, progress))
@@ -86,7 +85,7 @@ private struct TimelineWaveform: View {
                     .fill(.black.opacity(0.35))
                 
                 let barCount = max(10, Int(contentWidth / 6)) // 每根 bar 約 3 寬 + 3 spacing
-                FakeWave(barCount: barCount)
+                FakeWave(barCount: barCount, color: .white)
                     .frame(width: contentWidth, height: h, alignment: .leading) // ✅ 靠左
                     .opacity(0.9)
                     .offset(x: contentOffsetX)
@@ -127,11 +126,8 @@ private struct TimelineWaveform: View {
                         }
                         guard let base = dragBaseStart else { return }
                         
-                        // translation 轉成 start 的變化量：
-                        // contentWidth 對應「整段音訊」，所以 dx/contentWidth = 變化的比例
                         let delta = Double(value.translation.width / contentWidth)
                         
-                        // ✅ 方向：手指往左(translation 為負) → start 增加 → 波形往左
                         let newStart = min(max(0, base - delta), maxStart)
                         onScrubTo(newStart)
                     }
@@ -146,14 +142,23 @@ private struct TimelineWaveform: View {
 
 private struct FakeWave: View {
     let barCount: Int
+    let color: Color
+    
+    // 定義一個對稱的「菱形」高度序列
+    // 數字代表高度比例：低 -> 中 -> 高 -> 中 -> 低
+    private let diamondPattern: [CGFloat] = [
+        0.2, 0.4, 0.6, 0.8, 0.6, 0.4
+    ]
     
     var body: some View {
-        HStack(alignment: .center, spacing: 3) {
+        HStack(spacing: 4) {
             ForEach(0..<barCount, id: \.self) { i in
-                let v = (i * 17) % 80
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(.white.opacity(0.8))
-                    .frame(width: 3, height: CGFloat(10 + v))
+                let ratio = diamondPattern[i % diamondPattern.count]
+                
+                Capsule()
+                    .fill(color)
+                    .frame(width: 3, height: 60 * ratio)
+                    .frame(height: 80, alignment: .center)
             }
         }
     }
