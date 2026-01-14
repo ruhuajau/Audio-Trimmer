@@ -91,6 +91,7 @@ private struct TimelineWaveform: View {
                   .opacity(0.9)
                   .offset(x: contentOffsetX)
                   .clipped()
+                  .id(contentOffsetX)
 
                 // ✅ 框框固定置中
                 RoundedRectangle(cornerRadius: 12)
