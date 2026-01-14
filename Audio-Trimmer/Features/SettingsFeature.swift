@@ -12,16 +12,15 @@ struct SettingsFeature {
   @ObservableState
   struct State: Equatable {
     var totalTrackLength: Double = 60 // seconds
-    // 0~1 代表百分比
-    var keyTimes: [Double] = [0.08, 0.20, 0.33, 0.41, 0.62, 0.78, 0.90]
-    // optional: timeline 可視長度佔總長比例
-    var timelineLengthRatio: Double? = nil
+    var keyTimesText: String = "8,20,33,41"
+    var keyTimes: [Double] = []
+    var timelineLengthRatio: Double? = 1.0
   }
 
   enum Action: Equatable {
     case totalLengthChanged(Double)
-    case timelineLengthRatioChanged(String) // 用文字輸入比較省事
-    case setDefaultKeyTimesTapped
+    case keyTimesTextChanged(String)
+    case timelineLengthRatioChanged(String)
     case startTapped
   }
 
@@ -37,16 +36,28 @@ struct SettingsFeature {
         if trimmed.isEmpty {
           state.timelineLengthRatio = nil
         } else if let v = Double(trimmed) {
-          state.timelineLengthRatio = max(0.1, min(1.0, v))
+          let ratio = v / 100.0
+          state.timelineLengthRatio = max(0.1, min(1.0, ratio))
         }
-        return .none
-
-      case .setDefaultKeyTimesTapped:
-        state.keyTimes = [0.08, 0.20, 0.33, 0.41, 0.62, 0.78, 0.90]
         return .none
 
       case .startTapped:
         return .none
+          
+      case let .keyTimesTextChanged(text):
+        state.keyTimesText = text
+
+        let values = text
+          .split(separator: ",")
+          .compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }
+          .map { min(max($0 / 100.0, 0), 1) }
+          .sorted()
+
+        if !values.isEmpty {
+          state.keyTimes = values
+        }
+        return .none
+
       }
     }
   }

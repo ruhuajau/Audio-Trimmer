@@ -29,7 +29,6 @@ struct AppFeature {
     Reduce { state, action in
       switch action {
       case .settings(.startTapped):
-        // 將 Settings 的設定值帶到 Trimmer
         let s = state.settings
         state.path.append(
           .trimmer(

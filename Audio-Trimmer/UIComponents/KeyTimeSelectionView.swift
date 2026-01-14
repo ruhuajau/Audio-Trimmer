@@ -18,19 +18,19 @@ struct KeyTimeSelectionView: View {
           .font(.headline)
           .foregroundStyle(.white)
 
-        Text("Selection: \(pct(store.selectionStart)) - \(pct(store.selectionEnd))")
+        Text("Selection: \(pct(store.selectionRange.lowerBound)) - \(pct(store.selectionRange.upperBound))")
           .foregroundStyle(.white.opacity(0.85))
-
+                           
         Text("Current: \(pct(store.playhead))")
           .foregroundStyle(.green)
 
-        KeyTimeBar(
-          keyTimes: store.keyTimes,
-          selection: store.selectionRange,
-          playhead: store.playhead
-        ) { tapped in
-          store.send(.keyTimeTapped(tapped))
-        }
+          KeyTimeBar(
+            keyTimes: store.keyTimes,
+            selection: store.selectionRange,
+            playhead: store.playhead
+          ) { tapped in
+              store.send(.keyTimeTapped(tapped))
+          }
       }
       .padding(16)
       .background(.ultraThinMaterial)
@@ -52,38 +52,40 @@ private struct KeyTimeBar: View {
 
   var body: some View {
     GeometryReader { geo in
-      ZStack(alignment: .leading) {
-        Capsule()
-          .fill(.white.opacity(0.12))
-          .frame(height: 18)
+      let w = geo.size.width
 
-        // selection highlight (yellow)
-        Capsule()
-          .fill(.yellow)
-          .frame(
-            width: max(2, geo.size.width * (selection.upperBound - selection.lowerBound)),
-            height: 10
-          )
-          .offset(x: geo.size.width * selection.lowerBound)
-          .padding(.leading, 0)
-          .opacity(0.95)
+        ZStack(alignment: .leading) {
+          Capsule()
+            .fill(.white.opacity(0.12))
+            .frame(height: 18)
+            .allowsHitTesting(false)
 
-        // playhead
-        Capsule()
-          .fill(.green)
-          .frame(width: 2, height: 18)
-          .offset(x: geo.size.width * playhead)
+          Capsule()
+            .fill(.yellow)
+            .frame(
+              width: max(2, w * (selection.upperBound - selection.lowerBound)),
+              height: 10
+            )
+            .offset(x: w * selection.lowerBound)
+            .opacity(0.95)
+            .allowsHitTesting(false)
 
-        // key time dots
-        ForEach(keyTimes, id: \.self) { t in
-          Circle()
-            .fill(.pink)
-            .frame(width: 16, height: 16)
-            .offset(x: geo.size.width * t - 8)
-            .contentShape(Rectangle().inset(by: -10))
-            .onTapGesture { onTapKeyTime(t) }
+            ForEach(keyTimes, id: \.self) { t in
+              ZStack {
+                Circle()
+                  .fill(.pink)
+                  .frame(width: 16, height: 16)
+              }
+              .offset(x: w * t - 8)
+              .highPriorityGesture(
+                TapGesture().onEnded {
+                  print("Tapped:", t)
+                  onTapKeyTime(t)
+                }
+              )
+            }
         }
-      }
+
     }
     .frame(height: 22)
   }
