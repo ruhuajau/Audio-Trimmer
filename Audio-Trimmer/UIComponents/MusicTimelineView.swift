@@ -47,11 +47,10 @@ struct MusicTimelineView: View {
 
 // MARK: - Fake waveform + scrub
 private struct TimelineWaveform: View {
-    let selection: ClosedRange<Double>     // 0~1，固定 10 秒視窗（absolute）
-    let playhead: Double                   // 0~1
+    let selection: ClosedRange<Double>
+    let playhead: Double
     let timelineLengthRatio: Double?
-    let onScrubTo: (Double) -> Void        // 更新 selectionStart（0~1）
-    
+    let onScrubTo: (Double) -> Void
     @State private var dragBaseStart: Double? = nil
     
     var body: some View {
@@ -59,10 +58,11 @@ private struct TimelineWaveform: View {
             let w = geo.size.width
             let h = geo.size.height
             
-            let r = CGFloat(min(1, max(0.2, timelineLengthRatio ?? 1.0)))
+            let ratio = CGFloat(timelineLengthRatio ?? 1.0)
 
-            let base = 0.62 / r
-            let windowWidth = w * min(0.92, max(0.35, base))
+            let clampedRatio = min(1.0, max(0.3, ratio))
+
+            let windowWidth = w * 0.62 * clampedRatio
             let windowX = (w - windowWidth) / 2
 
             let windowRatio = max(0.0001, selection.upperBound - selection.lowerBound)
@@ -77,18 +77,16 @@ private struct TimelineWaveform: View {
             let denom = max(0.0001, selection.upperBound - selection.lowerBound)
             let progress = (playhead - selection.lowerBound) / denom
             let clampedProgress = min(1, max(0, progress))
-            let playheadX = windowX + windowWidth * clampedProgress
             let progressWidth = windowWidth * clampedProgress
             
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 14)
                     .fill(.black.opacity(0.35))
                 
-                let barCount = max(10, Int(contentWidth / 7)) // 稍微增加間距讓菱形更明顯
-
+                let barCount = max(10, Int(contentWidth / 7))
                 FakeWave(barCount: barCount, color: .white)
-                    .frame(width: contentWidth, height: h - 18) // 👈 高度改為與選取框一致 (92 - 18 = 74)
-                    .offset(x: contentOffsetX, y: 9)            // 👈 加入 y: 9，與選取框同步偏移
+                    .frame(width: contentWidth, height: h - 18)
+                    .offset(x: contentOffsetX, y: 9)
                     .opacity(0.9)
                     .clipped()
                 
@@ -149,16 +147,13 @@ private struct FakeWave: View {
     ]
     
     var body: some View {
-        // 移除 GeometryReader 避免不必要的排版計算
-        HStack(alignment: .center, spacing: 4) { // 👈 確保 HStack 內部置中
+        HStack(alignment: .center, spacing: 4) {
             ForEach(0..<barCount, id: \.self) { i in
                 let ratio = diamondPattern[i % diamondPattern.count]
                 
                 Capsule()
                     .fill(color)
-                    // 使用比例來決定高度，確保不會超出父容器
                     .frame(width: 3, height: 50 * ratio)
-                    // 這裡的 frame 是關鍵，它定義了單根 bar 的感應/佈局區域
                     .frame(maxHeight: .infinity, alignment: .center)
             }
         }
